@@ -30,3 +30,7 @@
 *.exe
 *.out
 *.app
+
+# Agent Directives
+GEMINI.md
+*/build
