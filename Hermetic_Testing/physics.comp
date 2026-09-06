@@ -1,0 +1,19 @@
+#version 450
+layout(local_size_x = 256) in;
+struct Particle { float posX, posY, posZ, mass; float velX, velY, velZ, pad; };
+layout(std430, binding = 0) buffer ParticleBuffer { Particle particles[]; };
+layout(push_constant) uniform PushConstants { uint particleCount; float dt; float gravity; uint numSteps; };
+void main() {
+    uint idx = gl_GlobalInvocationID.x;
+    if (idx >= particleCount) return;
+    precise float vy = particles[idx].velY; precise float py = particles[idx].posY;
+    precise float vx = particles[idx].velX; precise float px = particles[idx].posX;
+    precise float vz = particles[idx].velZ; precise float pz = particles[idx].posZ;
+    for (uint s = 0; s < numSteps; s++) {
+        vy += gravity * dt; py += vy * dt;
+        px += vx * dt; pz += vz * dt;
+    }
+    particles[idx].velY = vy; particles[idx].posY = py;
+    particles[idx].velX = vx; particles[idx].posX = px;
+    particles[idx].velZ = vz; particles[idx].posZ = pz;
+}
