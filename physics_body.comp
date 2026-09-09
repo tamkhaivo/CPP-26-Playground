@@ -1,0 +1,38 @@
+#version 450
+layout(local_size_x = 256) in;
+
+struct PhysicsBodyState {
+    vec4 pos;
+    vec4 vel;
+    vec4 ext;
+    uvec4 ids;
+};
+
+layout(std430, binding = 0) buffer BodiesBuffer {
+    PhysicsBodyState bodies[];
+};
+
+layout(push_constant) uniform PushConstants {
+    uint bodyCount;
+    uint subSteps;
+    float dt;
+    float gravity;
+};
+
+void main() {
+    uint idx = gl_GlobalInvocationID.x;
+    if (idx >= bodyCount) return;
+
+    vec4 p = bodies[idx].pos;
+    vec4 v = bodies[idx].vel;
+
+    for (uint s = 0; s < subSteps; ++s) {
+        v.y += gravity * dt;
+        p.y += v.y * dt;
+        p.x += v.x * dt;
+        p.z += v.z * dt;
+    }
+
+    bodies[idx].pos = p;
+    bodies[idx].vel = v;
+}

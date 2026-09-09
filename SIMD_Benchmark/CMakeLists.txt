@@ -22,3 +22,8 @@ find_package(Threads REQUIRED)
 
 add_executable(simd_benchmark main.cpp)
 target_link_libraries(simd_benchmark PRIVATE hwy Threads::Threads)
+if(MSVC)
+    target_compile_options(simd_benchmark PRIVATE /O2 /arch:AVX2)
+else()
+    target_compile_options(simd_benchmark PRIVATE -O3 -mavx2)
+endif()

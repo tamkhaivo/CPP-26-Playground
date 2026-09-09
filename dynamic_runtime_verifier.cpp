@@ -68,7 +68,7 @@ public:
             size_t localCount = 0;
             size_t i = startOffset;
             for (; i + lanes <= endOffset; i += lanes) {
-                alignas(16) float x[16], y[16], z[16];
+                alignas(64) float x[64], y[64], z[64];
                 for (size_t l = 0; l < lanes; ++l) {
                     x[l] = entities[i + l].px;
                     y[l] = entities[i + l].py;
@@ -79,25 +79,16 @@ public:
                 auto vy = hn::Load(d, y);
                 auto vz = hn::Load(d, z);
 
-                if (enforceStrictHermetic) {
-                    const auto expMask = hn::BitCast(d, hn::Set(hn::ScalableTag<uint32_t>(), 0x7F800000u));
-                    vx = hn::And(vx, expMask);
-                    vy = hn::And(vy, expMask);
-                    vz = hn::And(vz, expMask);
-                }
-
                 auto inX = hn::And(hn::Ge(vx, boundsMin), hn::Le(vx, boundsMax));
                 auto inY = hn::And(hn::Ge(vy, boundsMin), hn::Le(vy, boundsMax));
                 auto inZ = hn::And(hn::Ge(vz, boundsMin), hn::Le(vz, boundsMax));
                 auto valid = hn::And(hn::And(inX, inY), inZ);
 
                 if (!hn::AllFalse(d, valid)) {
-                    auto vRes = hn::IfThenElse(valid, hn::Set(d, 1.0f), hn::Set(d, 0.0f));
-                    alignas(16) float res[16];
-                    hn::Store(vRes, d, res);
-
+                    uint8_t maskBits[8] = {0};
+                    hn::StoreMaskBits(d, valid, maskBits);
                     for (size_t l = 0; l < lanes; ++l) {
-                        if (res[l] > 0.5f) {
+                        if ((maskBits[l / 8] >> (l % 8)) & 1) {
                             localCount++;
                         }
                     }
@@ -135,7 +126,7 @@ public:
 
             size_t i = startOffset;
             for (; i + lanes <= endOffset; i += lanes) {
-                alignas(16) float x[16], y[16], z[16];
+                alignas(64) float x[64], y[64], z[64];
                 for (size_t l = 0; l < lanes; ++l) {
                     x[l] = entities[i + l].px;
                     y[l] = entities[i + l].py;
@@ -146,25 +137,16 @@ public:
                 auto vy = hn::Load(d, y);
                 auto vz = hn::Load(d, z);
 
-                if (enforceStrictHermetic) {
-                    const auto expMask = hn::BitCast(d, hn::Set(hn::ScalableTag<uint32_t>(), 0x7F800000u));
-                    vx = hn::And(vx, expMask);
-                    vy = hn::And(vy, expMask);
-                    vz = hn::And(vz, expMask);
-                }
-
                 auto inX = hn::And(hn::Ge(vx, boundsMin), hn::Le(vx, boundsMax));
                 auto inY = hn::And(hn::Ge(vy, boundsMin), hn::Le(vy, boundsMax));
                 auto inZ = hn::And(hn::Ge(vz, boundsMin), hn::Le(vz, boundsMax));
                 auto valid = hn::And(hn::And(inX, inY), inZ);
 
                 if (!hn::AllFalse(d, valid)) {
-                    auto vRes = hn::IfThenElse(valid, hn::Set(d, 1.0f), hn::Set(d, 0.0f));
-                    alignas(16) float res[16];
-                    hn::Store(vRes, d, res);
-
+                    uint8_t maskBits[8] = {0};
+                    hn::StoreMaskBits(d, valid, maskBits);
                     for (size_t l = 0; l < lanes; ++l) {
-                        if (res[l] > 0.5f) {
+                        if ((maskBits[l / 8] >> (l % 8)) & 1) {
                             candidateIndices[writeIdx++] = static_cast<uint32_t>(i + l);
                         }
                     }

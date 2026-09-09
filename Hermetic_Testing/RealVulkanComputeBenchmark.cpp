@@ -63,7 +63,7 @@ static const uint32_t SPIRV_CODE[] = {
     0x00060005, 0x00000012, 0x68737550, 0x736e6f43, 0x746e6174, 0x00000073, 0x00070006, 0x00000012, 
     0x00000000, 0x74726170, 0x656c6369, 0x6e756f43, 0x00000074, 0x00040006, 0x00000012, 0x00000001, 
     0x00007464, 0x00050006, 0x00000012, 0x00000002, 0x76617267, 0x00797469, 0x00060006, 0x00000012, 
-    0x00000003, 0x536d754e, 0x73706574, 0x00000000, 0x00030005, 0x00000014, 0x00000000, 0x00030005, 
+    0x00000003, 0x536d756e, 0x73706574, 0x00000000, 0x00030005, 0x00000014, 0x00000000, 0x00030005, 
     0x00000020, 0x00007976, 0x00050005, 0x00000021, 0x74726150, 0x656c6369, 0x00000000, 0x00050006, 
     0x00000021, 0x00000000, 0x58736f70, 0x00000000, 0x00050006, 0x00000021, 0x00000001, 0x59736f70, 
     0x00000000, 0x00050006, 0x00000021, 0x00000002, 0x5a736f70, 0x00000000, 0x00050006, 0x00000021, 
@@ -84,7 +84,10 @@ static const uint32_t SPIRV_CODE[] = {
     0x00050048, 0x00000021, 0x00000006, 0x00000023, 0x00000018, 0x00050048, 0x00000021, 0x00000007, 
     0x00000023, 0x0000001c, 0x00040047, 0x00000022, 0x00000006, 0x00000020, 0x00030047, 0x00000023, 
     0x00000003, 0x00050048, 0x00000023, 0x00000000, 0x00000023, 0x00000000, 0x00040047, 0x00000025, 
-    0x00000021, 0x00000000, 0x00040047, 0x00000025, 0x00000022, 0x00000000, 0x00040047, 0x0000007e, 
+    0x00000021, 0x00000000, 0x00040047, 0x00000025, 0x00000022, 0x00000000, 0x00030047, 0x00000053, 
+    0x0000002a, 0x00030047, 0x00000055, 0x0000002a, 0x00030047, 0x00000059, 0x0000002a, 0x00030047, 
+    0x0000005b, 0x0000002a, 0x00030047, 0x0000005f, 0x0000002a, 0x00030047, 0x00000061, 0x0000002a, 
+    0x00030047, 0x00000065, 0x0000002a, 0x00030047, 0x00000067, 0x0000002a, 0x00040047, 0x0000007e, 
     0x0000000b, 0x00000019, 0x00020013, 0x00000002, 0x00030021, 0x00000003, 0x00000002, 0x00040015, 
     0x00000006, 0x00000020, 0x00000000, 0x00040020, 0x00000007, 0x00000007, 0x00000006, 0x00040017, 
     0x00000009, 0x00000006, 0x00000003, 0x00040020, 0x0000000a, 0x00000001, 0x00000009, 0x0004003b, 
@@ -113,7 +116,7 @@ static const uint32_t SPIRV_CODE[] = {
     0x0004003d, 0x00000006, 0x00000019, 0x00000018, 0x000500ae, 0x0000001a, 0x0000001b, 0x00000010, 
     0x00000019, 0x000300f7, 0x0000001d, 0x00000000, 0x000400fa, 0x0000001b, 0x0000001c, 0x0000001d, 
     0x000200f8, 0x0000001c, 0x000100fd, 0x000200f8, 0x0000001d, 0x0004003d, 0x00000006, 0x00000026, 
-    0x00000008, 0x00070041, 0x00000028, 0x0000006c, 0x00000025, 0x00000016, 0x0000006a, 0x00000027, 
+    0x00000008, 0x00070041, 0x00000028, 0x00000029, 0x00000025, 0x00000016, 0x00000026, 0x00000027, 
     0x0004003d, 0x00000011, 0x0000002a, 0x00000029, 0x0003003e, 0x00000020, 0x0000002a, 0x0004003d, 
     0x00000006, 0x0000002c, 0x00000008, 0x00070041, 0x00000028, 0x0000002e, 0x00000025, 0x00000016, 
     0x0000002c, 0x0000002d, 0x0004003d, 0x00000011, 0x0000002f, 0x0000002e, 0x0003003e, 0x0000002b, 
@@ -162,9 +165,8 @@ static const uint32_t SPIRV_CODE[] = {
     0x00000039, 0x00070041, 0x00000028, 0x00000078, 0x00000025, 0x00000016, 0x00000076, 0x0000003b, 
     0x0003003e, 0x00000078, 0x00000077, 0x0004003d, 0x00000006, 0x00000079, 0x00000008, 0x0004003d, 
     0x00000011, 0x0000007a, 0x0000003e, 0x00070041, 0x00000028, 0x0000007b, 0x00000025, 0x00000016, 
-    0x00000079, 0x00000040, 0x0003003e, 0x0000007b, 0x0000007a, 0x000100fd, 0x00010038, 
+    0x00000079, 0x00000040, 0x0003003e, 0x0000007b, 0x0000007a, 0x000100fd, 0x00010038,
 };
-;
 
 
 uint32_t FindMemoryType(VkPhysicalDevice physDevice, uint32_t typeFilter, VkMemoryPropertyFlags props) {
@@ -215,8 +217,9 @@ void HermeticSIMDGravityIntegration(ParticleState* particles, size_t count, floa
         const auto v_dt = hn::Set(d, dt);
         const auto v_grav = hn::Set(d, gravity);
 
-        for (size_t i = startOff; i + lanes <= endOff; i += lanes) {
-            alignas(64) float vy[16], py[16], vx[16], px[16], vz[16], pz[16];
+        size_t i = startOff;
+        for (; i + lanes <= endOff; i += lanes) {
+            alignas(64) float vy[64], py[64], vx[64], px[64], vz[64], pz[64];
             for (size_t l = 0; l < lanes; ++l) {
                 vy[l] = particles[i+l].velY; py[l] = particles[i+l].posY;
                 vx[l] = particles[i+l].velX; px[l] = particles[i+l].posX;
@@ -242,6 +245,16 @@ void HermeticSIMDGravityIntegration(ParticleState* particles, size_t count, floa
                 particles[i+l].velY = vy[l]; particles[i+l].posY = py[l];
                 particles[i+l].velX = vx[l]; particles[i+l].posX = px[l];
                 particles[i+l].velZ = vz[l]; particles[i+l].posZ = pz[l];
+            }
+        }
+
+        // Handle scalar tail if chunk size or total count is not divisible by SIMD lanes
+        for (; i < endOff; ++i) {
+            for (uint32_t s = 0; s < steps; ++s) {
+                particles[i].velY = std::fma(gravity, dt, particles[i].velY);
+                particles[i].posY = std::fma(particles[i].velY, dt, particles[i].posY);
+                particles[i].posX = std::fma(particles[i].velX, dt, particles[i].posX);
+                particles[i].posZ = std::fma(particles[i].velZ, dt, particles[i].posZ);
             }
         }
     });
@@ -327,7 +340,7 @@ int main() {
     std::cout << "Starting benchmark..." << std::endl;
     VkApplicationInfo appInfo{VK_STRUCTURE_TYPE_APPLICATION_INFO};
     appInfo.pApplicationName = "Type0 Physics Benchmark";
-    appInfo.apiVersion = VK_API_VERSION_1_0;
+    appInfo.apiVersion = VK_API_VERSION_1_2;
 
     VkInstanceCreateInfo instInfo{VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO};
     instInfo.pApplicationInfo = &appInfo;
@@ -345,6 +358,14 @@ int main() {
     vkEnumeratePhysicalDevices(instance, &devCount, physDevices.data());
 
     VkPhysicalDevice physDevice = physDevices[0];
+    for (const auto& d : physDevices) {
+        VkPhysicalDeviceProperties props;
+        vkGetPhysicalDeviceProperties(d, &props);
+        if (props.deviceType == VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU) {
+            physDevice = d;
+            break;
+        }
+    }
     VkPhysicalDeviceProperties devProps;
     vkGetPhysicalDeviceProperties(physDevice, &devProps);
     std::cout << "[GPU]        : " << devProps.deviceName << std::endl;
@@ -454,21 +475,30 @@ int main() {
     }
     vkBindBufferMemory(device, storageBuffer, bufferMemory, 0);
 
-    std::cout << "Memory bound, loading shader module from physics.spv..." << std::endl;
+    std::cout << "Memory bound, loading shader module..." << std::endl;
+    std::vector<uint32_t> spvBuf;
+    const uint32_t* pSpv = nullptr;
+    size_t spvSize = 0;
+
     std::ifstream spvFile("physics.spv", std::ios::binary | std::ios::ate);
-    if (!spvFile.is_open()) {
-        std::cerr << "Failed to open physics.spv!" << std::endl; return 1;
+    if (spvFile.is_open()) {
+        spvSize = spvFile.tellg();
+        spvFile.seekg(0);
+        spvBuf.resize(spvSize / 4);
+        spvFile.read(reinterpret_cast<char*>(spvBuf.data()), spvSize);
+        spvFile.close();
+        pSpv = spvBuf.data();
+        std::cout << "Loaded physics.spv from disk (" << spvSize << " bytes)" << std::endl;
+    } else {
+        std::cout << "physics.spv not found on disk, using embedded SPIRV_CODE (" << sizeof(SPIRV_CODE) << " bytes)" << std::endl;
+        pSpv = SPIRV_CODE;
+        spvSize = sizeof(SPIRV_CODE);
     }
-    size_t spvSize = spvFile.tellg();
-    spvFile.seekg(0);
-    std::vector<uint32_t> spvBuf(spvSize / 4);
-    spvFile.read(reinterpret_cast<char*>(spvBuf.data()), spvSize);
-    spvFile.close();
 
     VkShaderModuleCreateInfo shaderInfo{};
     shaderInfo.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
     shaderInfo.codeSize = spvSize;
-    shaderInfo.pCode = spvBuf.data();
+    shaderInfo.pCode = pSpv;
 
     VkShaderModule shaderModule;
     if (vkCreateShaderModule(device, &shaderInfo, nullptr, &shaderModule) != VK_SUCCESS) {

@@ -140,6 +140,15 @@ public:
     AlignedSoABuilder(PositionSoA& pos, VelocitySoA& vel)
         : m_positions(pos), m_velocities(vel), m_stagedIndex(pos.Size()) {}
 
+    ~AlignedSoABuilder() {
+        Finalize();
+    }
+
+    void Finalize() {
+        m_positions.EnforceTailPadding();
+        m_velocities.EnforceTailPadding();
+    }
+
     AlignedSoABuilder& WithPosition(float x, float y, float z) {
         m_positions.x.push_back(x);
         m_positions.y.push_back(y);
@@ -155,9 +164,7 @@ public:
     }
 
     [[nodiscard]] uint32_t Build() {
-        m_positions.EnforceTailPadding();
-        m_velocities.EnforceTailPadding();
-        return static_cast<uint32_t>(m_stagedIndex);
+        return static_cast<uint32_t>(m_stagedIndex++);
     }
 };
 
@@ -173,19 +180,19 @@ public:
     ArchetypeBatchBuilder(PositionSoA& pos, VelocitySoA& vel)
         : m_positions(pos), m_velocities(vel) {}
 
-    void SpawnBatch(size_t count, 
-                    float initX, float initY, float initZ,
-                    float initVx, float initVy, float initVz) {
+    void SpawnBatch(size_t count, float posX, float posY, float posZ, float velX, float velY, float velZ) {
         m_positions.Reserve(m_positions.Size() + count);
         m_velocities.Reserve(m_velocities.Size() + count);
 
-        m_positions.x.insert(m_positions.x.end(), count, initX);
-        m_positions.y.insert(m_positions.y.end(), count, initY);
-        m_positions.z.insert(m_positions.z.end(), count, initZ);
+        for (size_t i = 0; i < count; ++i) {
+            m_positions.x.push_back(posX);
+            m_positions.y.push_back(posY);
+            m_positions.z.push_back(posZ);
 
-        m_velocities.vx.insert(m_velocities.vx.end(), count, initVx);
-        m_velocities.vy.insert(m_velocities.vy.end(), count, initVy);
-        m_velocities.vz.insert(m_velocities.vz.end(), count, initVz);
+            m_velocities.vx.push_back(velX);
+            m_velocities.vy.push_back(velY);
+            m_velocities.vz.push_back(velZ);
+        }
 
         m_positions.EnforceTailPadding();
         m_velocities.EnforceTailPadding();
@@ -205,8 +212,11 @@ public:
     SIMDArenaBuilder(void* memoryAddress, size_t capacityBytes)
         : m_basePtr(reinterpret_cast<uint8_t*>(memoryAddress)), m_capacity(capacityBytes) {
         std::uintptr_t addr = reinterpret_cast<std::uintptr_t>(m_basePtr);
-        if ((addr & 63) != 0) {
-            size_t pad = 64 - (addr & 63);
+        size_t pad = (64 - (addr & 63)) & 63;
+        if (pad > 0) {
+            if (m_capacity < pad) {
+                throw std::runtime_error("Insufficient buffer capacity for alignment padding");
+            }
             m_basePtr += pad;
             m_capacity -= pad;
         }
@@ -222,6 +232,9 @@ public:
         }
 
         std::memcpy(m_basePtr + m_offset, sourceData, bytes);
+        if (alignedBytes > bytes) {
+            std::memset(m_basePtr + m_offset + bytes, 0, alignedBytes - bytes);
+        }
         m_offset += alignedBytes;
         return *this;
     }
@@ -239,9 +252,9 @@ inline void SystemUpdateSIMDPhysics(PositionSoA& pos, const VelocitySoA& vel, fl
     const auto vDt = hn::Set(d, dt);
     const size_t lanes = hn::Lanes(d);
 
-    const size_t elementCount = pos.x.size();
-
-    for (size_t i = 0; i < elementCount; i += lanes) {
+    const size_t elementCount = std::min(pos.x.size(), vel.vx.size());
+    size_t i = 0;
+    for (; i + lanes <= elementCount; i += lanes) {
         const auto px = hn::Load(d, &pos.x[i]);
         const auto py = hn::Load(d, &pos.y[i]);
         const auto pz = hn::Load(d, &pos.z[i]);
@@ -257,6 +270,12 @@ inline void SystemUpdateSIMDPhysics(PositionSoA& pos, const VelocitySoA& vel, fl
         hn::Store(newX, d, &pos.x[i]);
         hn::Store(newY, d, &pos.y[i]);
         hn::Store(newZ, d, &pos.z[i]);
+    }
+
+    for (; i < elementCount; ++i) {
+        pos.x[i] += vel.vx[i] * dt;
+        pos.y[i] += vel.vy[i] * dt;
+        pos.z[i] += vel.vz[i] * dt;
     }
 }
 

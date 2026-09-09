@@ -160,8 +160,8 @@ int main() {
     for (size_t i = 0; i < NUM_PIXELS; ++i) {
         int32_t scalar_val = scalar_results[i];
         
-        // Convert float result back to 8-bit shifted fixed space for fair comparison
-        int32_t float_simd_as_fixed = static_cast<int32_t>(hwy_float_results[i] * 256.0f);
+        // Convert float result back to fixed space (16 fractional bits: 8-bit shifted coords * 8-bit shifted delta)
+        int32_t float_simd_as_fixed = static_cast<int32_t>(std::round(hwy_float_results[i] * 65536.0f));
         int32_t fixed_simd_val = hwy_fixed_results[i];
 
         if (std::abs(float_simd_as_fixed - scalar_val) > 1) {

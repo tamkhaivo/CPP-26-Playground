@@ -135,7 +135,7 @@ public:
         }
 
         auto startFixed = std::chrono::high_resolution_clock::now();
-        std::atomic<uint64_t> fixedStateHash{0ULL};
+        std::vector<uint64_t> chunkHashes(totalChunks, 0ULL);
 
         std::for_each(std::execution::par, chunkIndices.begin(), chunkIndices.end(), [&](size_t chunkIdx) {
             size_t startOffset = chunkIdx * chunkSize;
@@ -143,9 +143,11 @@ public:
             uint64_t localHash = 14695981039346656037ULL; // FNV-1a basis
 
             for (size_t i = startOffset; i < endOffset; ++i) {
-                // Fixed-Point Integration: pos = pos + (vel * dt)
-                int32_t nextX = fixedParticles[i].posX + ((fixedParticles[i].velX * 1092) >> 16);
-                int32_t nextY = fixedParticles[i].posY + ((fixedParticles[i].velY * 1092) >> 16);
+                // Fixed-Point Integration: pos = pos + (vel * dt) using 64-bit promotion to avoid UB overflow
+                int64_t vx_dt = (static_cast<int64_t>(fixedParticles[i].velX) * 1092) >> 16;
+                int64_t vy_dt = (static_cast<int64_t>(fixedParticles[i].velY) * 1092) >> 16;
+                int32_t nextX = fixedParticles[i].posX + static_cast<int32_t>(vx_dt);
+                int32_t nextY = fixedParticles[i].posY + static_cast<int32_t>(vy_dt);
                 
                 // Hash fixed-point bytes (Deterministic Bit-Identical across all hardware)
                 localHash ^= static_cast<uint64_t>(nextX);
@@ -153,14 +155,21 @@ public:
                 localHash ^= static_cast<uint64_t>(nextY);
                 localHash *= 1099511628211ULL;
             }
-            fixedStateHash.fetch_xor(localHash, std::memory_order_relaxed);
+            chunkHashes[chunkIdx] = localHash;
         });
+
+        // Deterministic ordered reduction across chunks
+        uint64_t finalFixedHash = 14695981039346656037ULL;
+        for (size_t c = 0; c < totalChunks; ++c) {
+            finalFixedHash ^= chunkHashes[c];
+            finalFixedHash *= 1099511628211ULL;
+        }
 
         auto endFixed = std::chrono::high_resolution_clock::now();
         std::chrono::duration<double, std::milli> durationFixed = endFixed - startFixed;
 
         std::cout << "Q16.16 Fixed-Point SIMD/Int Engine Execution Time: " << durationFixed.count() << " ms\n";
-        std::cout << "Hermetic State Hash: 0x" << std::hex << fixedStateHash.load() << std::dec << " (100% BIT-EXACT)\n";
+        std::cout << "Hermetic State Hash: 0x" << std::hex << finalFixedHash << std::dec << " (100% BIT-EXACT)\n";
         std::cout << "========================================================================\n";
     }
 };

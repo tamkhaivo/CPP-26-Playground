@@ -123,6 +123,11 @@ Stats RunBenchmark(const char* name, Func&& func, int warmup = 5, int runs = 15)
 // =============================================================================
 #pragma optimize("", off)
 #pragma float_control(precise, on, push)
+#if defined(__clang__)
+__attribute__((optnone))
+#elif defined(__GNUC__)
+__attribute__((optimize("O0")))
+#endif
 void ScalarTranscendentalLoop(const float* __restrict in, float* __restrict out, size_t N) {
     for (size_t i = 0; i < N; ++i) {
         float x = in[i];
@@ -142,8 +147,16 @@ int main() {
 
     // --- System Info ---
     const hn::ScalableTag<float> d;
-    const size_t lanes = hn::Lanes(d);
+#if defined(_MSC_VER)
     std::cout << "[Compiler]          : MSVC " << _MSC_VER << "\n";
+#elif defined(__clang__)
+    std::cout << "[Compiler]          : Clang " << __clang_version__ << "\n";
+#elif defined(__GNUC__)
+    std::cout << "[Compiler]          : GCC " << __GNUC__ << "." << __GNUC_MINOR__ << "\n";
+#else
+    std::cout << "[Compiler]          : Unknown\n";
+#endif
+    const size_t lanes = hn::Lanes(d);
     std::cout << "[SIMD Lanes]        : " << lanes << " float32 (";
     if (lanes >= 16) std::cout << "AVX-512";
     else if (lanes >= 8) std::cout << "AVX2";

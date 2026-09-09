@@ -46,8 +46,8 @@ void ProcessParticleChunk(Particle* data, size_t start, size_t end, float dt) {
 
     size_t i = start;
     for (; i + lanes <= end; i += lanes) {
-        float px[16], py[16], pz[16];
-        float vx[16], vy[16], vz[16];
+        alignas(64) float px[64], py[64], pz[64];
+        alignas(64) float vx[64], vy[64], vz[64];
 
         for (size_t l = 0; l < lanes; ++l) {
             px[l] = data[i + l].x;
@@ -88,10 +88,10 @@ void ProcessParticleChunk(Particle* data, size_t start, size_t end, float dt) {
     }
 
     for (; i < end; ++i) {
-        data[i].vy += -9.81f * dt;
-        data[i].x += data[i].vx * dt;
-        data[i].y += data[i].vy * dt;
-        data[i].z += data[i].vz * dt;
+        data[i].vy = std::fma(-9.81f, dt, data[i].vy);
+        data[i].x = std::fma(data[i].vx, dt, data[i].x);
+        data[i].y = std::fma(data[i].vy, dt, data[i].y);
+        data[i].z = std::fma(data[i].vz, dt, data[i].z);
     }
 }
 
@@ -116,7 +116,7 @@ struct StatResult {
     uint64_t finalHash;
 };
 
-StatResult RunBenchmarkTrial(const std::vector<Particle>& initialParticles, size_t particleCount, size_t chunkSize, int frames, float dt, int trials, std::function<uint64_t(std::vector<Particle>&)> runFrameLoop) {
+StatResult RunBenchmarkTrial(const std::vector<Particle>& initialParticles, size_t particleCount, size_t chunkSize, int frames, float dt, int trials, std::function<void(std::vector<Particle>&)> runFrameLoop) {
     std::vector<double> trialTimes;
     trialTimes.reserve(trials);
     uint64_t lastHash = 0;
@@ -131,14 +131,15 @@ StatResult RunBenchmarkTrial(const std::vector<Particle>& initialParticles, size
 
         particles = initialParticles; // Reset state post warmup
 
-        auto t0 = std::chrono::high_resolution_clock::now();
+        auto t0 = std::chrono::steady_clock::now();
         for (int f = 0; f < frames; ++f) {
-            lastHash = runFrameLoop(particles);
+            runFrameLoop(particles);
         }
-        auto t1 = std::chrono::high_resolution_clock::now();
+        auto t1 = std::chrono::steady_clock::now();
 
         double elapsed = std::chrono::duration<double, std::milli>(t1 - t0).count();
         trialTimes.push_back(elapsed);
+        lastHash = ComputeStateHash(particles);
     }
 
     double sum = std::accumulate(trialTimes.begin(), trialTimes.end(), 0.0);
@@ -163,7 +164,6 @@ int main() {
     constexpr int TRIALS = 3;
 
     const std::vector<size_t> chunkSizes = { 1024, 4096, 16384 };
-
 
     std::cout << "=========================================================================================================\n";
     std::cout << "  HERMETIC JOB SYSTEM EVALUATION: enkiTS vs TASKFLOW RIGOROUS CRITIQUE & BENCHMARK\n";
@@ -194,7 +194,7 @@ int main() {
             enki::TaskScheduler ts;
             ts.Initialize();
 
-            auto runner = [&](std::vector<Particle>& particles) -> uint64_t {
+            auto runner = [&](std::vector<Particle>& particles) {
                 enki::TaskSet task(static_cast<uint32_t>(totalChunks), [&](enki::TaskSetPartition range, uint32_t threadnum) {
                     for (uint32_t c = range.start; c < range.end; ++c) {
                         size_t startIdx = c * chunkSize;
@@ -204,7 +204,6 @@ int main() {
                 });
                 ts.AddTaskSetToPipe(&task);
                 ts.WaitforTask(&task);
-                return ComputeStateHash(particles);
             };
 
             StatResult res = RunBenchmarkTrial(initialParticles, PARTICLE_COUNT, chunkSize, FRAMES, DT, TRIALS, runner);
@@ -227,7 +226,7 @@ int main() {
             enki::TaskScheduler ts;
             ts.Initialize(config);
 
-            auto runner = [&](std::vector<Particle>& particles) -> uint64_t {
+            auto runner = [&](std::vector<Particle>& particles) {
                 enki::TaskSet task(static_cast<uint32_t>(totalChunks), [&](enki::TaskSetPartition range, uint32_t threadnum) {
                     for (uint32_t c = range.start; c < range.end; ++c) {
                         size_t startIdx = c * chunkSize;
@@ -237,7 +236,6 @@ int main() {
                 });
                 ts.AddTaskSetToPipe(&task);
                 ts.WaitforTask(&task);
-                return ComputeStateHash(particles);
             };
 
             StatResult res = RunBenchmarkTrial(initialParticles, PARTICLE_COUNT, chunkSize, FRAMES, DT, TRIALS, runner);
@@ -252,12 +250,12 @@ int main() {
         }
 
         // ---------------------------------------------------------------------------------
-        // 3. Taskflow Multi-threaded (Zero-Allocation Pre-constructed Task Graph)
+        // 3. Taskflow Multi-threaded (Pre-constructed Task Graph)
         // ---------------------------------------------------------------------------------
         {
             tf::Executor executor;
 
-            auto runner = [&](std::vector<Particle>& particles) -> uint64_t {
+            auto runner = [&](std::vector<Particle>& particles) {
                 tf::Taskflow taskflow;
                 for (size_t c = 0; c < totalChunks; ++c) {
                     size_t startIdx = c * chunkSize;
@@ -267,7 +265,6 @@ int main() {
                     });
                 }
                 executor.run(taskflow).wait();
-                return ComputeStateHash(particles);
             };
 
             StatResult res = RunBenchmarkTrial(initialParticles, PARTICLE_COUNT, chunkSize, FRAMES, DT, TRIALS, runner);
@@ -287,7 +284,7 @@ int main() {
         {
             tf::Executor executor(1);
 
-            auto runner = [&](std::vector<Particle>& particles) -> uint64_t {
+            auto runner = [&](std::vector<Particle>& particles) {
                 tf::Taskflow taskflow;
                 for (size_t c = 0; c < totalChunks; ++c) {
                     size_t startIdx = c * chunkSize;
@@ -297,7 +294,6 @@ int main() {
                     });
                 }
                 executor.run(taskflow).wait();
-                return ComputeStateHash(particles);
             };
 
             StatResult res = RunBenchmarkTrial(initialParticles, PARTICLE_COUNT, chunkSize, FRAMES, DT, TRIALS, runner);
